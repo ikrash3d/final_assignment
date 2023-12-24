@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Allow to track the progress of the script
 exec > /home/ubuntu/steps.log 2>&1 # tail -f steps.log
 
 # Common instructions
@@ -79,7 +80,7 @@ while ! mysqladmin ping --silent; do
 done
 
 # Install Sakila database
-cd ~/
+cd /home/ubuntu
 sudo apt-get update
 sudo apt-get install -y unzip sysbench
 wget https://downloads.mysql.com/docs/sakila-db.zip
@@ -91,8 +92,9 @@ mysql -u root -e "SOURCE sakila-data.sql;"
 
 # Verify that the default tables were created
 mysql -u root -e "USE sakila; SHOW FULL TABLES;"
-mysql -u root -e "USE sakila; SELECT COUNT(*) FROM film;"
+mysql -u root -e "USE sakila; SELECT COUNT(*) FROM payment;"
 
+# Grant Sakila privileges to the root user
 mysql -u root -e "GRANT ALL PRIVILEGES ON sakila.* TO 'root'@'%' IDENTIFIED BY '' WITH GRANT OPTION;"
 mysql -u root -e "FLUSH PRIVILEGES"
 

@@ -1,7 +1,5 @@
 #!bin/bash
 
-exec > /home/ubuntu/steps.log 2>&1 # tail -f steps.log
-
 # Common instructions
 mkdir -p /opt/mysqlcluster/home
 cd /opt/mysqlcluster/home
