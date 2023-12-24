@@ -106,6 +106,7 @@ resource "aws_instance" "proxy"{
   instance_type = "t2.large"
   vpc_security_group_ids = [aws_security_group.security_group.id]
   availability_zone      = "us-east-1d"
+  private_ip             = "172.31.45.23"
   tags = {
     Name = "Proxy"
   }
