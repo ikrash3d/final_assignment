@@ -100,3 +100,13 @@ resource "aws_instance" "mysql-cluster-worker-2" {
     Name = "MySQL Cluster Worker-2"
   }
 }
+
+resource "aws_instance" "proxy"{
+  ami           = "ami-0c7217cdde317cfec"
+  instance_type = "t2.large"
+  vpc_security_group_ids = [aws_security_group.security_group.id]
+  availability_zone      = "us-east-1d"
+  tags = {
+    Name = "Proxy"
+  }
+}
