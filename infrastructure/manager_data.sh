@@ -65,3 +65,42 @@ sudo scripts/mysql_install_db --no-defaults --datadir=/opt/mysqlcluster/deploy/m
 sudo chown -R root /opt/mysqlcluster/home/mysqlc
 
 sudo /opt/mysqlcluster/home/mysqlc/bin/ndb_mgmd -f /opt/mysqlcluster/deploy/conf/config.ini --initial --configdir=/opt/mysqlcluster/deploy/conf/
+
+ndb_mgm -e show
+
+sudo /opt/mysqlcluster/home/mysqlc/bin/mysqld --defaults-file=/opt/mysqlcluster/deploy/conf/my.cnf --user=root &
+
+ndb_mgm -e show
+
+
+# Wait for mysql to start
+while ! mysqladmin ping --silent; do
+    sleep 1
+done
+
+# Install Sakila database
+cd ~/
+sudo apt-get update
+sudo apt-get install -y unzip sysbench
+wget https://downloads.mysql.com/docs/sakila-db.zip
+unzip sakila-db.zip
+cd sakila-db
+
+mysql -u root -e "SOURCE sakila-schema.sql;"
+mysql -u root -e "SOURCE sakila-data.sql;"
+
+# Verify that the default tables were created
+mysql -u root -e "USE sakila; SHOW FULL TABLES;"
+mysql -u root -e "USE sakila; SELECT COUNT(*) FROM film;"
+
+mysql -u root -e "GRANT ALL PRIVILEGES ON sakila.* TO 'root'@'%' IDENTIFIED BY '' WITH GRANT OPTION;"
+mysql -u root -e "FLUSH PRIVILEGES"
+
+# Prepare a MySQL database for an OLTP (Online Transaction Processing) benchmark
+sudo sysbench /usr/share/sysbench/oltp_read_write.lua prepare --db-driver=mysql --mysql-host=ip-172-31-40-75.ec2.internal --mysql-db=sakila --mysql-user=root --mysql-password --table-size=1000000 
+
+# Run the OLTP benchmark
+sudo sysbench /usr/share/sysbench/oltp_read_write.lua run --db-driver=mysql --mysql-host=ip-172-31-40-75.ec2.internal --mysql-db=sakila --mysql-user=root --mysql-password --table-size=1000000 --threads=6 --time=60 --events=0 
+
+# Cleanup the OLTP benchmark
+sudo sysbench /usr/share/sysbench/oltp_read_write.lua cleanup --db-driver=mysql --mysql-host=ip-172-31-40-75.ec2.internal --mysql-db=sakila --mysql-user=root --mysql-password 
