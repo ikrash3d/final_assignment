@@ -36,7 +36,7 @@ port=3306
 EOL
 
 echo "[ndb_mgmd]
-hostname=ip-172-31-40-75.ec2.internal
+hostname=ip-172-31-47-224.ec2.internal
 datadir=/opt/mysqlcluster/deploy/ndb_data
 nodeid=1
 
@@ -45,15 +45,15 @@ noofreplicas=3
 datadir=/opt/mysqlcluster/deploy/ndb_data
 
 [ndbd]
-hostname=ip-172-31-35-48.ec2.internal
+hostname=ip-172-31-32-146.ec2.internal
 nodeid=2
 
 [ndbd]
-hostname=ip-172-31-43-247.ec2.internal
+hostname=ip-172-31-46-175.ec2.internal
 nodeid=3
 
 [ndbd]
-hostname=ip-172-31-33-114.ec2.internal
+hostname=ip-172-31-36-209.ec2.internal
 nodeid=4
 
 [mysqld]
@@ -99,10 +99,10 @@ mysql -u root -e "GRANT ALL PRIVILEGES ON sakila.* TO 'root'@'%' IDENTIFIED BY '
 mysql -u root -e "FLUSH PRIVILEGES"
 
 # Prepare a MySQL database for an OLTP (Online Transaction Processing) benchmark
-sudo sysbench /usr/share/sysbench/oltp_read_write.lua prepare --db-driver=mysql --mysql-host=ip-172-31-40-75.ec2.internal --mysql-db=sakila --mysql-user=root --mysql-password --table-size=1000000 
+sudo sysbench /usr/share/sysbench/oltp_read_write.lua prepare --db-driver=mysql --mysql-host=ip-172-31-47-224.ec2.internal --mysql-db=sakila --mysql-user=root --mysql-password --table-size=1000000 
 
 # Run the OLTP benchmark
-sudo sysbench /usr/share/sysbench/oltp_read_write.lua run --db-driver=mysql --mysql-host=ip-172-31-40-75.ec2.internal --mysql-db=sakila --mysql-user=root --mysql-password --table-size=1000000 --threads=6 --time=60 --events=0 
+sudo sysbench /usr/share/sysbench/oltp_read_write.lua run --db-driver=mysql --mysql-host=ip-172-31-47-224.ec2.internal --mysql-db=sakila --mysql-user=root --mysql-password --table-size=1000000 --threads=6 --time=60 --events=0 
 
 # Cleanup the OLTP benchmark
-sudo sysbench /usr/share/sysbench/oltp_read_write.lua cleanup --db-driver=mysql --mysql-host=ip-172-31-40-75.ec2.internal --mysql-db=sakila --mysql-user=root --mysql-password 
+sudo sysbench /usr/share/sysbench/oltp_read_write.lua cleanup --db-driver=mysql --mysql-host=ip-172-31-47-224.ec2.internal --mysql-db=sakila --mysql-user=root --mysql-password 

@@ -16,4 +16,4 @@ sudo apt-get update && sudo apt-get -y install libncurses5
 # Worker instructions
 mkdir -p /opt/mysqlcluster/deploy/ndb_data
 
-ndbd -c ip-172-31-40-75.ec2.internal:1186
+ndbd -c ip-172-31-47-224.ec2.internal:1186

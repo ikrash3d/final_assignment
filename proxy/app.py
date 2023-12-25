@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from aws_creds import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
+from aws_creds import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY
 from sshtunnel import SSHTunnelForwarder
 import pymysql
 import ping3
@@ -8,36 +8,15 @@ import boto3
 
 app = Flask(__name__)
 
+# AWS EC2 client configuration
+client = boto3.client(
+    service_name='ec2',
+    region_name="us-east-1",
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+)
 
-client= boto3.client(
-        service_name='ec2',
-        region_name="us-east-1",
-        aws_access_key_id=AWS_ACCESS_KEY,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_session_token=AWS_SESSION_TOKEN
-    )
-
-# # MySQL Cluster configuration
-# cluster_nodes = [
-#     {"host": "172.31.40.75", "port": 3306},
-#     {"host": "172.31.35.48", "port": 3306},
-#     {"host": "172.31.43.247", "port": 3306},
-#     {"host": "172.31.33.114", "port": 3306}
-# ]
-
-# manager_ip= "172.31.40.75",
-workers_private_ip= ["172.31.40.48","172.31.43.247", "172.31.33.114"]
-# connection_port = "3306"
-
-# # SSH tunnel configuration
-# ssh_config = {
-#     'ssh_address_or_host': ('proxy-ip', 22),
-#     'ssh_username': 'your-ssh-username',
-#     'ssh_password': 'your-ssh-password',
-#     'remote_bind_address': ('127.0.0.1', 3306),
-#     'local_bind_address': ('', 3307)  # You can choose any available local port
-# }
-
+# Function to retrieve public IP addresses of EC2 instances with a specific keyword in their name
 def get_instances_public_ips(keyword):
     response = client.describe_instances()
     instances_infos = []
@@ -53,7 +32,7 @@ def get_instances_public_ips(keyword):
 
     return instances_infos
 
-
+# Function to retrieve the public IP address of the manager instance
 def get_manager_public_ip():
     manager_infos = {}
     instances_infos = get_instances_public_ips("Manager")
@@ -63,7 +42,8 @@ def get_manager_public_ip():
         break 
 
     return manager_infos  
-    
+
+# Function to measure the ping time to a worker instance
 def measure_worker_ping_time(worker_ip_adress, timeout=2):
     try:
         # Measure ping time using the ping3 library
@@ -77,6 +57,7 @@ def measure_worker_ping_time(worker_ip_adress, timeout=2):
     # Return a high value if ping fails
     return float('inf')
 
+# Function to select the worker instance with the least response time
 def select_worker_with_least_response_time(workers):
     min_ping_time = float('inf')
     selected_worker = None
@@ -91,133 +72,100 @@ def select_worker_with_least_response_time(workers):
     
     return selected_worker
 
+# Function to get a random worker instance
 def get_random_worker(workers):
     if not workers:
         return None
     return random.choice(workers)
 
-
+# Function to extract the public IP addresses from a list of instances
 def extract_workers_ip_adresses(instances):
     ips=[]
     for instance in instances:
         ips.append(instance["PublicIpAddress"])   
     return ips
 
-def extrac_manager_ip_adress(instance):
-    return instance["PublicIpAddress"]
+# Function to establish an SSH tunnel to a worker instance
+def establish_tunnel(worker_ip, manager_ip):
+    return SSHTunnelForwarder(worker_ip, ssh_username="ubuntu", ssh_pkey="my_key.pem", remote_bind_address=(manager_ip, 3306))
 
-@app.route('/direct_hit', methods=['GET'])
-def direct_hit():
-    workers = get_instances_public_ips("Worker")
-    workers_ip = extract_workers_ip_adresses(workers)
-    worker_ip = str(workers_ip[0])
-    print(str(worker_ip))
-    manager = get_manager_public_ip()
-    
-
-    print(manager.get('PublicIpAddress'))
-    with SSHTunnelForwarder((worker_ip,22), ssh_username="ubuntu", ssh_pkey="ssh_tunnel_key.pem", remote_bind_address=(manager.get("PublicIpAdress"),3306)) as tunnel:
+# Function to execute an SQL query through the established SSH tunnel
+def execute_sql_query(tunnel, query,manager_ip):
+    with tunnel:
         conn = pymysql.connect(
-            host=get_manager_public_ip(),
+            host=manager_ip,
             port=3306,
             user='root',
             password='',
             database='sakila',
             autocommit=True
         )
+
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM payment;")
+        cursor.execute(query)
         result = cursor.fetchall()
         conn.close()
-        return jsonify({"result": "Direct Hit Success", "data": result})
 
-# @app.route('/random', methods=['GET', 'POST'])
-# def random_proxy():
-#     random_worker_ip = get_random_worker_ips()
-#     with SSHTunnelForwarder(**ssh_config) as tunnel:
-#         conn = pymysql.connect(
-#             host=random_worker_ip,
-#             port=connection_port,
-#             user='root',
-#             password='',
-#             database='sakila'
-#         )
+    return result
 
-#         # Implement your logic for random selection here
-#         # Randomly choose a node for both write and read requests
-#         nodes = cluster_nodes
-#         chosen_node = random.choice(nodes)
+# Function to establish an SSH tunnel to the manager instance
+def direct_hit():
+    manager_ip = get_manager_public_ip().get('PublicIpAddress')
+    tunnel = establish_tunnel(manager_ip, manager_ip)
+    return tunnel
 
-#         cursor = conn.cursor()
-#         cursor.execute("INSERT INTO your_table (column1, column2) VALUES (%s, %s)", ("value1", "value2"))
-#         conn.commit()
+# Function to establish an SSH tunnel to a random worker instance
+def random_node():
+    workers = get_instances_public_ips("Worker")
+    random_worker_ip = get_random_worker(workers).get('PublicIpAddress')
+    manager_ip = get_manager_public_ip().get('PublicIpAddress')
+    tunnel = establish_tunnel(random_worker_ip, manager_ip)
+    return tunnel
 
-#         cursor.execute("SELECT * FROM your_table")
-#         result = cursor.fetchall()
+# Function to establish an SSH tunnel to the fastest worker instance
+def customized_node():
+    workers = get_instances_public_ips("Worker")
+    fastest_worker_ip = select_worker_with_least_response_time(workers).get('PublicIpAddress')
+    manager_ip = get_manager_public_ip().get('PublicIpAddress')
+    tunnel = establish_tunnel(fastest_worker_ip, manager_ip)
+    return tunnel
 
-#         conn.close()
-#         return jsonify({"result": "Random Proxy Success", "data": result})
+# Route to handle SQL queries based on the query_type parameter
+@app.route('/query', methods=['GET'])
+def query():
+    # Get query_type parameter from the request
+    query_type = request.args.get('query_type')
 
-# @app.route('/customized', methods=['GET', 'POST'])
-# def customized_proxy():
-#     with SSHTunnelForwarder(**ssh_config) as tunnel:
-#         conn = pymysql.connect(
-#             host='127.0.0.1',
-#             port=tunnel.local_bind_port,
-#             user='your-mysql-username',
-#             password='your-mysql-password',
-#             database='your-database-name'
-#         )
+    # Determine the type of query based on the query_type parameter
+    if query_type == 'direct_hit':
+        tunnel = direct_hit()
+    elif query_type == 'random':
+        tunnel = random_node()
+    elif query_type == 'customized':
+        tunnel = customized_node()
+    else:
+        return jsonify({'error': 'Invalid query type'}), 400
 
-#         # Implement your logic for customized selection here
-#         nodes = cluster_nodes
-#         ping_times = {node["host"]: ping3.ping(node["host"]) for node in nodes}
-#         chosen_node = min(ping_times, key=ping_times.get)
+    # Get SQL query parameter from the request
+    sql_query = request.args.get('query')
 
-#         cursor = conn.cursor()
-#         cursor.execute("INSERT INTO your_table (column1, column2) VALUES (%s, %s)", ("value1", "value2"))
-#         conn.commit()
+    # Check if SQL query is provided
+    if not sql_query:
+        return jsonify({'error': 'No SQL query provided'}), 400
 
-#         cursor.execute("SELECT * FROM your_table")
-#         result = cursor.fetchall()
+    # Get the manager's public IP address
+    manager_ip = get_manager_public_ip().get('PublicIpAddress')
 
-#         conn.close()
-#         return jsonify({"result": "Customized Proxy Success", "data": result})
+    try:
+        # Execute SQL query through the established SSH tunnel
+        result = execute_sql_query(tunnel, sql_query, manager_ip)
+        return jsonify({"result": "Query executed successfully", "data": result})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+    finally:
+        # Close the SSH tunnel
+        tunnel.close()
 
-# @app.route('/query', methods=['POST'])
-# def query():
-#     query_type = request.json.get('type')
-
-#     if query_type == 'direct_hit':
-#         connection = direct_hit()
-#     elif query_type == 'random':
-#         connection = random_node()
-#     elif query_type == 'customized':
-#         connection = customized_node()
-#     else:
-#         return jsonify({'error': 'Invalid query type'}), 400
-
-#     # Execute your SQL query here using 'connection'
-
-#     connection.close()
-#     return jsonify({'result': 'Query executed successfully'})
-    
+# Run the Flask application
 if __name__ == '__main__':
-    # workers = get_workers_public_ips()
-    # manager = get_manager_public_ip()
-    # print("manager", manager)
-    # print("workers", extract_workers_ip_adresses(workers))
     app.run(debug=True)
-    
-    # print("random", get_random_worker(workers))
-    # print("fastest", select_worker_with_least_response_time(workers))
-    
-                 
-              
-
-    
-
-    
-    
-    
-    
