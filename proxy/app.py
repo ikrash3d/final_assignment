@@ -1,10 +1,12 @@
-from flask import Flask, request, jsonify
-from aws_creds import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY
-from sshtunnel import SSHTunnelForwarder
-import pymysql
-import ping3
+import logging
 import random
+
 import boto3
+import ping3
+import pymysql
+from aws_creds import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY
+from flask import Flask, jsonify, request
+from sshtunnel import SSHTunnelForwarder
 
 app = Flask(__name__)
 
@@ -15,6 +17,9 @@ client = boto3.client(
     aws_access_key_id=AWS_ACCESS_KEY,
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
 )
+
+used_manager_ip =''
+used_worker_ip = ''
 
 # Function to retrieve public IP addresses of EC2 instances with a specific keyword in their name
 def get_instances_public_ips(keyword):
@@ -87,6 +92,8 @@ def extract_workers_ip_adresses(instances):
 
 # Function to establish an SSH tunnel to a worker instance
 def establish_tunnel(worker_ip, manager_ip):
+    app.logger.info(f"Manager IP: {manager_ip}")
+    app.logger.info(f"Worker IP: {worker_ip}")
     return SSHTunnelForwarder(worker_ip, ssh_username="ubuntu", ssh_pkey="my_key.pem", remote_bind_address=(manager_ip, 3306))
 
 # Function to execute an SQL query through the established SSH tunnel
@@ -130,6 +137,11 @@ def customized_node():
     tunnel = establish_tunnel(fastest_worker_ip, manager_ip)
     return tunnel
 
+# Route to check the health of the proxy
+@app.route("/health", methods=['GET'])
+def health():
+    return jsonify({"status": "healthy"})
+
 # Route to handle SQL queries based on the query_type parameter
 @app.route('/query', methods=['GET'])
 def query():
@@ -145,7 +157,7 @@ def query():
         tunnel = customized_node()
     else:
         return jsonify({'error': 'Invalid query type'}), 400
-
+    
     # Get SQL query parameter from the request
     sql_query = request.args.get('query')
 
@@ -159,7 +171,14 @@ def query():
     try:
         # Execute SQL query through the established SSH tunnel
         result = execute_sql_query(tunnel, sql_query, manager_ip)
-        return jsonify({"result": "Query executed successfully", "data": result})
+        print(result)
+        return jsonify(
+            {
+            "result": f"Query of type '{query_type}' was executed successfully", 
+            "data": result,  
+            "Manager IP": manager_ip, 
+            "Used worker IP": tunnel.ssh_host
+            })
     except Exception as e:
         return jsonify({"error": str(e)})
     finally:
@@ -168,4 +187,5 @@ def query():
 
 # Run the Flask application
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.logger.setLevel(logging.INFO)
+    app.run(debug=True, host='0.0.0.0', port=5000)

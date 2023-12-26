@@ -112,14 +112,19 @@ resource "aws_instance" "mysql-cluster-worker-2" {
 }
 
 resource "aws_instance" "proxy"{
-  ami           = "ami-0c7217cdde317cfec"
-  instance_type = "t2.large"
+  ami                    = "ami-0c7217cdde317cfec"
+  instance_type          = "t2.large"
   vpc_security_group_ids = [aws_security_group.security_group.id]
   availability_zone      = "us-east-1a"
+  user_data              = file("./proxy_data.sh")
   # private_ip             = "172.31.45.23"
-  private_ip = "172.31.32.165"
-  key_name = "my_key"
+  private_ip             = "172.31.32.165"
+  key_name               = "my_key"
   tags = {
     Name = "Proxy"
   }
+}
+
+output "proxy_public_ip"{
+  value = aws_instance.proxy.public_ip
 }
