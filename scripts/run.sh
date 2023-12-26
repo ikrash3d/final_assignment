@@ -31,7 +31,7 @@ cd ../scripts
 # echo "export AWS_SESSION_TOKEN='$AWS_SESSION_TOKEN'" >> env_vars.sh
 # echo "export MY_SQL_ROOT_PASSWORD='$MY_SQL_ROOT_PASSWORD'" >> env_vars.sh
 
-echo -e "Starting Assignment 2...\n"
+echo -e "Starting Final assignement...\n"
 echo -e "-----------\n"
 
 # Deploying the infrastructure
@@ -42,4 +42,4 @@ echo -e "Deploying the infrastructure...\n"
 # echo -e "Sending requests...\n"
 # ./send_requests.sh
 
-echo -e "You successfully ended Assignment 2 :)"
+#echo -e "You successfully ended Assignment 2 :)"

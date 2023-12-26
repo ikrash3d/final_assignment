@@ -32,4 +32,4 @@ sudo service docker start
 sudo docker pull ikrash3d/proxy:latest
 
 # Run the Flask app inside a Docker container
-sudo docker run -d -p 5000:5000 ikrash3d/proxy:latest
+sudo docker run -p 5000:5000 ikrash3d/proxy:latest
