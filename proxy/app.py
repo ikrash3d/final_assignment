@@ -173,12 +173,7 @@ def query():
         result = execute_sql_query(tunnel, sql_query, manager_ip)
         print(result)
         return jsonify(
-            {
-            "result": f"Query of type '{query_type}' was executed successfully", 
-            "data": result,  
-            "Manager IP": manager_ip, 
-            "Used worker IP": tunnel.ssh_host
-            })
+            {"Message": f"Query of type '{query_type}' was executed successfully", "Query Result": result, "Manager IP": manager_ip, "Used worker IP": tunnel.ssh_host})
     except Exception as e:
         return jsonify({"error": str(e)})
     finally:

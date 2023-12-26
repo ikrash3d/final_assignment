@@ -3,9 +3,7 @@
 
 
 # Local .pychace directory
-**/.__pycache__/*
-
-
+**/__pycache__/*
 
 # .tfstate files
 *.tfstate
@@ -50,6 +48,8 @@ terraform.rc
 # Ignore private keys
 my_terraform_key
 my_terraform_key.*
+*.pem
+aws_creds.py
 
 
 

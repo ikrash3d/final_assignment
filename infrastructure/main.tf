@@ -61,7 +61,6 @@ resource "aws_instance" "mysql-cluster-manager" {
   vpc_security_group_ids = [aws_security_group.security_group.id]
   availability_zone      = "us-east-1a"
   user_data              = file("./manager_data.sh")
-  # private_ip             = "172.31.40.75"
   private_ip = "172.31.47.224"
   key_name = "my_key"
   tags = {
@@ -75,7 +74,6 @@ resource "aws_instance" "mysql-cluster-worker-0" {
   vpc_security_group_ids = [aws_security_group.security_group.id]
   availability_zone      = "us-east-1a"
   user_data              = file("./workers_data.sh")
-  # private_ip             = "172.31.35.48"
   private_ip = "172.31.32.146"
   key_name = "my_key"
   tags = {
@@ -84,28 +82,26 @@ resource "aws_instance" "mysql-cluster-worker-0" {
 }
 
 resource "aws_instance" "mysql-cluster-worker-1" {
-  ami           = "ami-0c7217cdde317cfec"
-  instance_type = "t2.micro"
+  ami                    = "ami-0c7217cdde317cfec"
+  instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.security_group.id]
   availability_zone      = "us-east-1a"
   user_data              = file("./workers_data.sh")
-  # private_ip             = "172.31.43.247"
-  private_ip = "172.31.46.175"
-  key_name = "my_key"
+  private_ip             = "172.31.46.175"
+  key_name               = "my_key"
   tags = {
     Name = "MySQL Cluster Worker-1"
   }
 }
 
 resource "aws_instance" "mysql-cluster-worker-2" {
-  ami           = "ami-0c7217cdde317cfec"
-  instance_type = "t2.micro"
+  ami                    = "ami-0c7217cdde317cfec"
+  instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.security_group.id]
   availability_zone      = "us-east-1a"
   user_data              = file("./workers_data.sh")
-  # private_ip             = "172.31.33.114"
-  private_ip = "172.31.36.209"
-  key_name = "my_key"
+  private_ip             = "172.31.36.209"
+  key_name               = "my_key"
   tags = {
     Name = "MySQL Cluster Worker-2"
   }
@@ -117,7 +113,6 @@ resource "aws_instance" "proxy"{
   vpc_security_group_ids = [aws_security_group.security_group.id]
   availability_zone      = "us-east-1a"
   user_data              = file("./proxy_data.sh")
-  # private_ip             = "172.31.45.23"
   private_ip             = "172.31.32.165"
   key_name               = "my_key"
   tags = {
@@ -125,6 +120,30 @@ resource "aws_instance" "proxy"{
   }
 }
 
+resource "aws_instance" "gatekeeper"{
+  ami                    = "ami-0c7217cdde317cfec"
+  instance_type          = "t2.large"
+  vpc_security_group_ids = [aws_security_group.security_group.id]
+  availability_zone      = "us-east-1a"
+  key_name               = "my_key"
+  private_ip             = "172.31.47.146"
+  tags = {
+    Name = "Gatekeeper"
+  }
+}
+
+
+resource "aws_instance" "trusted_host"{
+  ami                    = "ami-0c7217cdde317cfec"
+  instance_type          = "t2.large"
+  vpc_security_group_ids = [aws_security_group.security_group.id]
+  availability_zone      = "us-east-1a"
+  key_name               = "my_key"
+  private_ip             = "172.31.44.254"
+  tags = {
+    Name = "Trusted Host"
+  }
+}
 output "proxy_public_ip"{
   value = aws_instance.proxy.public_ip
 }
