@@ -35,14 +35,14 @@ def establish_tunnel():
     proxy_public_ip = get_public_ip("Proxy").get('PublicIpAddress')
     
     # Create an SSH tunnel to the proxy instance
-    return SSHTunnelForwarder(proxy_public_ip, ssh_username="ubuntu", ssh_pkey="my_key.pem", remote_bind_address=(proxy_public_ip, 5000))
+    return SSHTunnelForwarder((proxy_public_ip, 22), ssh_username="ubuntu", ssh_pkey="my_key.pem", remote_bind_address=(proxy_public_ip, 80))
      
 def send_request_to_proxy(query_type, sql_query):
     # Get the public IP of the proxy instance
     proxy_public_ip = get_public_ip("Proxy").get('PublicIpAddress')
     
     # Use the established SSH tunnel to send a request to the proxy
-    return requests.get(f"http://{proxy_public_ip}:5000/query?query_type={query_type}&query={sql_query}").text
+    return requests.get(f"http://{proxy_public_ip}/query?query_type={query_type}&query={sql_query}").text
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -77,5 +77,5 @@ def query():
         establish_tunnel().close()
 
 if __name__ == "__main__":
-    # Run the Flask application on 0.0.0.0:5000
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Run the Flask application on 0.0.0.0:80
+    app.run(debug=True, host='0.0.0.0', port=80)

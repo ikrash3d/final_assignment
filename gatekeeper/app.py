@@ -35,7 +35,7 @@ def establish_tunnel():
     trusted_host_public_ip = get_public_ip("Trusted Host").get('PublicIpAddress')
     
     # Create an SSH tunnel to the trusted host instance
-    return SSHTunnelForwarder(trusted_host_public_ip, ssh_username="ubuntu", ssh_pkey="my_key.pem", remote_bind_address=(trusted_host_public_ip, 5000))
+    return SSHTunnelForwarder((trusted_host_public_ip, 22), ssh_username="ubuntu", ssh_pkey="my_key.pem", remote_bind_address=(trusted_host_public_ip, 80))
      
 def send_request_to_trusted_host(query_type, sql_query):
     # Get the public IP of the trusted host instance
@@ -43,7 +43,7 @@ def send_request_to_trusted_host(query_type, sql_query):
     
     # Use the established SSH tunnel to send a request to the trusted host
     with establish_tunnel():
-        return requests.get(f"http://{trusted_host_public_ip}:5000/query?query_type={query_type}&query={sql_query}").text
+        return requests.get(f"http://{trusted_host_public_ip}/query?query_type={query_type}&query={sql_query}").text
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -78,5 +78,5 @@ def query():
         establish_tunnel().close()
 
 if __name__ == "__main__":
-    # Run the Flask application on 0.0.0.0:5000
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Run the Flask application on 0.0.0.0:80
+    app.run(debug=True, host='0.0.0.0', port=80)

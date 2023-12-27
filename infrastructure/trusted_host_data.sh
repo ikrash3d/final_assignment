@@ -29,7 +29,7 @@ sudo usermod -a -G docker ec2-user
 sudo service docker start
 
 # Pull the latest image flask_app image from Docker Hub
-sudo docker pull ikrash3d/proxy:latest
+sudo docker pull ikrash3d/trusted_host:latest
 
 # Run the Flask app inside a Docker container
-sudo docker run -p 80:80 ikrash3d/proxy:latest
+sudo docker run -p 80:80 ikrash3d/trusted_host:latest

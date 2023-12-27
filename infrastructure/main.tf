@@ -13,7 +13,6 @@ provider "aws" {
   region     = "us-east-1"
   access_key = var.AWS_ACCESS_KEY
   secret_key = var.AWS_SECRET_ACCESS_KEY
-  # token      = var.AWS_SESSION_TOKEN
 }
 
 resource "aws_security_group" "security_group" {
@@ -36,6 +35,36 @@ resource "aws_security_group" "security_group" {
   }
 }
 
+resource "aws_security_group" "security_group_trusted_host" {
+  vpc_id = data.aws_vpc.default.id
+
+  ingress {
+    from_port        = 80
+    to_port          = 80
+    protocol         = "tcp"
+    # private ip adress of the gatekeeper
+    cidr_blocks      = ["172.31.47.146/32"]
+  }
+
+  ingress {
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    # private ip adress of the gatekeeper
+    cidr_blocks      = ["172.31.47.146/32"]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+}
+
+
+
 
 data "aws_vpc" "default" {
   default = true
@@ -56,21 +85,21 @@ resource "aws_instance" "mysql-stand-alone-server" {
 }
 
 resource "aws_instance" "mysql-cluster-manager" {
-  ami           = "ami-0c7217cdde317cfec"
-  instance_type = "t2.micro"
+  ami                    = "ami-0c7217cdde317cfec"
+  instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.security_group.id]
   availability_zone      = "us-east-1a"
   user_data              = file("./manager_data.sh")
-  private_ip = "172.31.47.224"
-  key_name = "my_key"
+  private_ip             = "172.31.47.224"
+  key_name               = "my_key"
   tags = {
     Name = "MySQL Cluster Manager"
   }
 }
 
 resource "aws_instance" "mysql-cluster-worker-0" {
-  ami           = "ami-0c7217cdde317cfec"
-  instance_type = "t2.micro"
+  ami                    = "ami-0c7217cdde317cfec"
+  instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.security_group.id]
   availability_zone      = "us-east-1a"
   user_data              = file("./workers_data.sh")
@@ -125,6 +154,7 @@ resource "aws_instance" "gatekeeper"{
   instance_type          = "t2.large"
   vpc_security_group_ids = [aws_security_group.security_group.id]
   availability_zone      = "us-east-1a"
+  user_data              = file("./gatekeeper_data.sh")
   key_name               = "my_key"
   private_ip             = "172.31.47.146"
   tags = {
@@ -136,8 +166,9 @@ resource "aws_instance" "gatekeeper"{
 resource "aws_instance" "trusted_host"{
   ami                    = "ami-0c7217cdde317cfec"
   instance_type          = "t2.large"
-  vpc_security_group_ids = [aws_security_group.security_group.id]
+  vpc_security_group_ids = [aws_security_group.security_group_trusted_host.id]
   availability_zone      = "us-east-1a"
+  user_data              = file("./trusted_host_data.sh") 
   key_name               = "my_key"
   private_ip             = "172.31.44.254"
   tags = {
@@ -146,4 +177,12 @@ resource "aws_instance" "trusted_host"{
 }
 output "proxy_public_ip"{
   value = aws_instance.proxy.public_ip
+}
+
+output "gatekeeper_public_ip"{
+  value = aws_instance.gatekeeper.public_ip
+}
+
+output "trusted_host_public_ip"{
+  value = aws_instance.trusted_host.public_ip
 }
