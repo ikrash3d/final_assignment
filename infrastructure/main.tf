@@ -42,7 +42,6 @@ resource "aws_security_group" "security_group_trusted_host" {
     protocol         = "tcp"
     # private ip adress of the gatekeeper
     cidr_blocks      = ["172.31.47.146/32"]
-    #cidr_blocks      = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -51,7 +50,6 @@ resource "aws_security_group" "security_group_trusted_host" {
     protocol         = "tcp"
     # private ip adress of the gatekeeper
     cidr_blocks      = ["172.31.47.146/32"]
-    #cidr_blocks      = ["0.0.0.0/0"]
   }
 
   egress {
