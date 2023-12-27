@@ -41,8 +41,8 @@ resource "aws_security_group" "security_group_trusted_host" {
     to_port          = 80
     protocol         = "tcp"
     # private ip adress of the gatekeeper
-    #cidr_blocks      = ["172.31.47.146/32"]
-    cidr_blocks      = ["0.0.0.0/0"]
+    cidr_blocks      = ["172.31.47.146/32"]
+    #cidr_blocks      = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -50,8 +50,8 @@ resource "aws_security_group" "security_group_trusted_host" {
     to_port          = 22
     protocol         = "tcp"
     # private ip adress of the gatekeeper
-    #cidr_blocks      = ["172.31.47.146/32"]
-    cidr_blocks      = ["0.0.0.0/0"]
+    cidr_blocks      = ["172.31.47.146/32"]
+    #cidr_blocks      = ["0.0.0.0/0"]
   }
 
   egress {
@@ -62,14 +62,9 @@ resource "aws_security_group" "security_group_trusted_host" {
   }
 }
 
-
-
-
 data "aws_vpc" "default" {
   default = true
 }
-
-
 
 resource "aws_instance" "mysql-stand-alone-server" {
   ami                    = "ami-0c7217cdde317cfec"
@@ -176,13 +171,13 @@ resource "aws_instance" "trusted_host"{
 }
 
 output "proxy_public_ip"{
-  value = aws_instance.proxy.public_ip
+  value = aws_instance.proxy.public_dns
 }
 
 output "gatekeeper_public_ip"{
-  value = aws_instance.gatekeeper.public_ip
+  value = aws_instance.gatekeeper.public_dns
 }
 
 output "trusted_host_public_ip"{
-  value = aws_instance.trusted_host.public_ip
+  value = aws_instance.trusted_host.public_dns
 }

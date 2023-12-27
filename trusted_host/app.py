@@ -26,20 +26,20 @@ def get_public_ip(keyword):
                 for tag in instance.get('Tags', []):
                     if tag.get("Key") == 'Name' and keyword in tag.get('Value'):
                         instance_name = tag.get('Value')
-                        instance_infos = {"Name": instance_name, "PublicIpAddress": instance.get("PublicIpAddress")}
+                        instance_infos = {"Name": instance_name, "PublicDnsName": instance.get("PublicDnsName")}
                       
     return instance_infos
 
 def establish_tunnel():
     # Get the public IP of the proxy instance
-    proxy_public_ip = get_public_ip("Proxy").get('PublicIpAddress')
+    proxy_public_ip = get_public_ip("Proxy").get('PublicDnsName')
     
     # Create an SSH tunnel to the proxy instance
     return SSHTunnelForwarder((proxy_public_ip, 22), ssh_username="ubuntu", ssh_pkey="my_key.pem", remote_bind_address=(proxy_public_ip, 80))
      
 def send_request_to_proxy(query_type, sql_query):
     # Get the public IP of the proxy instance
-    proxy_public_ip = get_public_ip("Proxy").get('PublicIpAddress')
+    proxy_public_ip = get_public_ip("Proxy").get('PublicDnsName')
     
     # Use the established SSH tunnel to send a request to the proxy
     return requests.get(f"http://{proxy_public_ip}/query?query_type={query_type}&query={sql_query}").text

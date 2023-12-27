@@ -83,13 +83,6 @@ def get_random_worker(workers):
         return None
     return random.choice(workers)
 
-# Function to extract the public IP addresses from a list of instances
-def extract_workers_ip_adresses(instances):
-    ips=[]
-    for instance in instances:
-        ips.append(instance["PublicIpAddress"])   
-    return ips
-
 # Function to establish an SSH tunnel to a worker instance
 def establish_tunnel(worker_ip, manager_ip):
     app.logger.info(f"Manager IP: {manager_ip}")
@@ -140,7 +133,7 @@ def customized_node():
 # Route to check the health of the proxy
 @app.route("/health", methods=['GET'])
 def health():
-    return jsonify({"status": "healthy"})
+    return jsonify({"status": "proxy healthy"})
 
 # Route to handle SQL queries based on the query_type parameter
 @app.route('/query', methods=['GET'])
@@ -171,7 +164,6 @@ def query():
     try:
         # Execute SQL query through the established SSH tunnel
         result = execute_sql_query(tunnel, sql_query, manager_ip)
-        print(result)
         return jsonify(
             {"Message": f"Query of type '{query_type}' was executed successfully", "Query Result": result, "Manager IP": manager_ip, "Used worker IP": tunnel.ssh_host})
     except Exception as e:
