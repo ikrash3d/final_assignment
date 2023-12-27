@@ -23,7 +23,6 @@ resource "aws_security_group" "security_group" {
     to_port          = 0
     protocol         = "-1"
     cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
   }
 
   egress {
@@ -31,7 +30,6 @@ resource "aws_security_group" "security_group" {
     to_port          = 0
     protocol         = "-1"
     cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
   }
 }
 
@@ -43,7 +41,8 @@ resource "aws_security_group" "security_group_trusted_host" {
     to_port          = 80
     protocol         = "tcp"
     # private ip adress of the gatekeeper
-    cidr_blocks      = ["172.31.47.146/32"]
+    #cidr_blocks      = ["172.31.47.146/32"]
+    cidr_blocks      = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -51,7 +50,8 @@ resource "aws_security_group" "security_group_trusted_host" {
     to_port          = 22
     protocol         = "tcp"
     # private ip adress of the gatekeeper
-    cidr_blocks      = ["172.31.47.146/32"]
+    #cidr_blocks      = ["172.31.47.146/32"]
+    cidr_blocks      = ["0.0.0.0/0"]
   }
 
   egress {
@@ -59,7 +59,6 @@ resource "aws_security_group" "security_group_trusted_host" {
     to_port          = 0
     protocol         = "-1"
     cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
   }
 }
 
@@ -103,8 +102,8 @@ resource "aws_instance" "mysql-cluster-worker-0" {
   vpc_security_group_ids = [aws_security_group.security_group.id]
   availability_zone      = "us-east-1a"
   user_data              = file("./workers_data.sh")
-  private_ip = "172.31.32.146"
-  key_name = "my_key"
+  private_ip             = "172.31.32.146"
+  key_name               = "my_key"
   tags = {
     Name = "MySQL Cluster Worker-0"
   }
@@ -175,6 +174,7 @@ resource "aws_instance" "trusted_host"{
     Name = "Trusted Host"
   }
 }
+
 output "proxy_public_ip"{
   value = aws_instance.proxy.public_ip
 }
