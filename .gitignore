@@ -50,6 +50,3 @@ my_terraform_key
 my_terraform_key.*
 *.pem
 aws_creds.py
-
-
-

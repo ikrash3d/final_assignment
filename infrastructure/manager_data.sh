@@ -105,4 +105,4 @@ sudo sysbench /usr/share/sysbench/oltp_read_write.lua prepare --db-driver=mysql 
 sudo sysbench /usr/share/sysbench/oltp_read_write.lua run --db-driver=mysql --mysql-host=ip-172-31-47-224.ec2.internal --mysql-db=sakila --mysql-user=root --mysql-password --table-size=1000000 --threads=6 --time=60 --events=0 
 
 # Cleanup the OLTP benchmark
-sudo sysbench /usr/share/sysbench/oltp_read_write.lua cleanup --db-driver=mysql --mysql-host=ip-172-31-47-224.ec2.internal --mysql-db=sakila --mysql-user=root --mysql-password 
+sudo sysbench /usr/share/sysbench/oltp_read_write.lua cleanup --db-driver=mysql --mysql-host=ip-172-31-47-224.ec2.internal --mysql-db=sakila --mysql-user=root --mysql-password --table-size=1000000 --threads=6 --time=60 --events=0 
